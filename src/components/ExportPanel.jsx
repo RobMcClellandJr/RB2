@@ -37,8 +37,8 @@ function ExportPanel({
       <div>
         <h2 id="export-title">Export Builder</h2>
         <p>
-          Customize the APX XML or download review CSV files. CPS import still
-          happens in Motorola CPS.
+          Customize the APX XML for CPS import, or download a generic CSV for
+          review and future workflows.
         </p>
       </div>
       <div className="export-controls">
@@ -64,7 +64,7 @@ function ExportPanel({
           </div>
           <div className="control-grid">
             <label className="field-control">
-              <span>Personality base</span>
+              <span>Personality name base</span>
               <input
                 maxLength={APX_NAME_MAX_LENGTH}
                 value={apxOptions.personalityName}
@@ -154,19 +154,16 @@ function ExportPanel({
             >
               APX CPS XML
             </button>
+          </div>
+          <div className="secondary-export-actions">
+            <p>Additional download</p>
             <button
+              className="secondary-button"
               type="button"
               onClick={() => onExport('generic')}
               disabled={selectedCount === 0}
             >
               Generic CSV
-            </button>
-            <button
-              type="button"
-              onClick={() => onExport('apx')}
-              disabled={selectedCount === 0}
-            >
-              APX review CSV
             </button>
           </div>
         </div>

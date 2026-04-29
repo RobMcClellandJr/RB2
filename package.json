@@ -2,6 +2,8 @@
   "name": "rb2",
   "private": true,
   "version": "0.0.0",
+  "description": "Browser-only amateur radio helper for converting RepeaterBook CSV data into user-reviewable radio programming import files.",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "vite",

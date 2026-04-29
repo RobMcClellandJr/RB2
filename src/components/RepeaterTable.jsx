@@ -38,7 +38,7 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
       <div className="panel-heading">
         <div>
           <h2 id="repeaters-title">Repeaters</h2>
-          <p>Channel name and zone stay editable. Turn on edit mode to correct imported frequency, tone, mode, or NAC data.</p>
+          <p>Channel names stay editable. Turn on edit mode to correct imported frequency, tone, mode, or NAC data.</p>
           <p className="constraint-note">
             APX display fields are limited to {APX_NAME_MAX_LENGTH} characters.
           </p>
@@ -69,7 +69,6 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
             <tr>
               <th scope="col">Use</th>
               <th scope="col">Channel Name</th>
-              <th scope="col">Zone</th>
               <th scope="col">RX</th>
               <th scope="col">TX</th>
               <th scope="col">TX Tone</th>
@@ -83,7 +82,7 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
           <tbody>
             {repeaters.length === 0 ? (
               <tr>
-                <td colSpan="11" className="empty-row">
+                <td colSpan="10" className="empty-row">
                   No CSV loaded yet.
                 </td>
               </tr>
@@ -110,18 +109,6 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
                       onChange={(event) =>
                         onUpdateRepeater(repeater.id, {
                           channelName: event.target.value,
-                        })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="table-input compact"
-                      maxLength={APX_NAME_MAX_LENGTH}
-                      value={repeater.zone}
-                      onChange={(event) =>
-                        onUpdateRepeater(repeater.id, {
-                          zone: event.target.value,
                         })
                       }
                     />

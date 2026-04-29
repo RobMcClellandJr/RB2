@@ -18,7 +18,7 @@ function ImportPanel({ onFilesLoaded, message }) {
         <p>{message}</p>
       </div>
       <label className="file-picker">
-        <span>Upload CSVs</span>
+        <span>Choose CSV files</span>
         <input
           accept=".csv,text/csv"
           multiple

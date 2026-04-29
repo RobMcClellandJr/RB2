@@ -13,6 +13,12 @@ import './styles.css'
 
 const DEFAULT_ZONE = 'Unassigned'
 const ZONE_NAME_MAX_LENGTH = 14
+const WORKFLOW_STEPS = [
+  { id: 'import', label: 'Import' },
+  { id: 'repeaters', label: 'Repeaters' },
+  { id: 'zones', label: 'Zones' },
+  { id: 'export', label: 'Export' },
+]
 
 function downloadCsv(filename, csvText) {
   const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' })
@@ -28,8 +34,10 @@ function downloadCsv(filename, csvText) {
 
 function App() {
   const [repeaters, setRepeaters] = useState([])
+  const [customZones, setCustomZones] = useState([])
   const [importName, setImportName] = useState('')
   const [message, setMessage] = useState('Import a RepeaterBook CSV to begin.')
+  const [activeStep, setActiveStep] = useState('import')
   const [exportModule, setExportModule] = useState('apx')
   const [apxOptions, setApxOptions] = useState({
     personalityName: 'RB2',
@@ -49,8 +57,9 @@ function App() {
     const zoneSet = new Set(
       repeaters.map((repeater) => repeater.zone).filter(Boolean),
     )
+    customZones.forEach((zone) => zoneSet.add(zone))
     return [...zoneSet].sort((a, b) => a.localeCompare(b))
-  }, [repeaters])
+  }, [customZones, repeaters])
 
   const zoneSummaries = useMemo(() => {
     const summaries = new Map()
@@ -63,14 +72,22 @@ function App() {
       summaries.set(zone, current)
     })
 
+    customZones.forEach((zone) => {
+      if (!summaries.has(zone)) {
+        summaries.set(zone, { name: zone, total: 0, selected: 0 })
+      }
+    })
+
     return [...summaries.values()].sort((a, b) => a.name.localeCompare(b.name))
-  }, [repeaters])
+  }, [customZones, repeaters])
 
   function handleFilesLoaded(files, readError) {
     if (readError) {
       setRepeaters([])
+      setCustomZones([])
       setImportName('')
       setMessage(readError.message)
+      setActiveStep('import')
       return
     }
 
@@ -89,14 +106,18 @@ function App() {
         fileCount === 1 ? files[0].name : `rb2-${fileCount}-csv-files`
 
       setRepeaters(normalized)
+      setCustomZones([])
       setImportName(importLabel)
       setMessage(
         `Loaded ${normalized.length} repeater record${normalized.length === 1 ? '' : 's'} from ${fileCount} CSV file${fileCount === 1 ? '' : 's'}.`,
       )
+      if (normalized.length > 0) setActiveStep('repeaters')
     } catch (error) {
       setRepeaters([])
+      setCustomZones([])
       setImportName('')
       setMessage(error.message)
+      setActiveStep('import')
     }
   }
 
@@ -114,22 +135,65 @@ function App() {
     )
   }
 
-  function assignSelectedToZone(zoneName) {
-    const cleanZone = zoneName.trim()
-    if (!cleanZone) return
-
-    setRepeaters((current) =>
-      current.map((repeater) =>
-        repeater.selected ? { ...repeater, zone: cleanZone } : repeater,
-      ),
-    )
-  }
-
   function autoAssignSelectedZones(strategy) {
     setRepeaters((current) =>
       current.map((repeater) =>
         repeater.selected
           ? { ...repeater, zone: buildZoneName(repeater, strategy) }
+          : repeater,
+      ),
+    )
+  }
+
+  function addCustomZone(zoneName) {
+    const cleanZone = truncateZoneName(zoneName)
+    if (!cleanZone) return
+
+    setCustomZones((current) =>
+      current.some((zone) => zone.toLowerCase() === cleanZone.toLowerCase())
+        ? current
+        : [...current, cleanZone],
+    )
+  }
+
+  function moveRepeaterToZone(repeaterId, zoneName) {
+    const cleanZone = truncateZoneName(zoneName)
+    addCustomZone(cleanZone)
+    updateRepeater(repeaterId, { zone: cleanZone })
+  }
+
+  function renameZone(oldZoneName, newZoneName) {
+    const oldZone = truncateZoneName(oldZoneName)
+    const newZone = truncateZoneName(newZoneName)
+    if (!newZone || oldZone === DEFAULT_ZONE || oldZone === newZone) return
+
+    setCustomZones((current) => {
+      const withoutOldZone = current.filter(
+        (zone) => zone.toLowerCase() !== oldZone.toLowerCase(),
+      )
+
+      return withoutOldZone.some(
+        (zone) => zone.toLowerCase() === newZone.toLowerCase(),
+      )
+        ? withoutOldZone
+        : [...withoutOldZone, newZone]
+    })
+    setRepeaters((current) =>
+      current.map((repeater) =>
+        repeater.zone === oldZone ? { ...repeater, zone: newZone } : repeater,
+      ),
+    )
+  }
+
+  function deleteZone(zoneName) {
+    const cleanZone = truncateZoneName(zoneName)
+    if (cleanZone === DEFAULT_ZONE) return
+
+    setCustomZones((current) => current.filter((zone) => zone !== cleanZone))
+    setRepeaters((current) =>
+      current.map((repeater) =>
+        repeater.zone === cleanZone
+          ? { ...repeater, zone: DEFAULT_ZONE }
           : repeater,
       ),
     )
@@ -175,6 +239,27 @@ function App() {
     )
   }
 
+  const activeStepIndex = WORKFLOW_STEPS.findIndex((step) => step.id === activeStep)
+  const canLeaveImport = repeaters.length > 0
+  const canMoveNext =
+    activeStep === 'import' ? canLeaveImport : activeStepIndex < WORKFLOW_STEPS.length - 1
+  const previousStep = WORKFLOW_STEPS[activeStepIndex - 1]
+  const nextStep = WORKFLOW_STEPS[activeStepIndex + 1]
+
+  function goToStep(stepId) {
+    if (stepId !== 'import' && repeaters.length === 0) return
+    setActiveStep(stepId)
+  }
+
+  function goToPreviousStep() {
+    if (previousStep) setActiveStep(previousStep.id)
+  }
+
+  function goToNextStep() {
+    if (!canMoveNext || !nextStep) return
+    setActiveStep(nextStep.id)
+  }
+
   return (
     <main className="app-shell">
       <header className="masthead">
@@ -185,18 +270,35 @@ function App() {
             alt="RB2 Amateur Radio Codeplug Imports"
           />
           <div className="masthead-copy">
-            <h1>RepeaterBook CSV to radio import files</h1>
+            <h1>RepeaterBook CSV to Radio Codeplug Import Files</h1>
             <p className="lede">
-              Review repeaters, build zones, and export APX CPS XML or CSV
-              files for CPS review. Browser-only: no native codeplug editing,
-              no radio connection.
+              Import repeaters, build zones, and export to an importable file
+              compatible with your radio's programming software.
             </p>
           </div>
         </div>
       </header>
 
       <section className="workspace" aria-label="RB2 repeater workflow">
-        <ImportPanel onFilesLoaded={handleFilesLoaded} message={message} />
+        <nav className="workflow-nav" aria-label="Workflow steps">
+          {WORKFLOW_STEPS.map((step, index) => {
+            const isActive = step.id === activeStep
+            const isAvailable = step.id === 'import' || repeaters.length > 0
+
+            return (
+              <button
+                key={step.id}
+                className={isActive ? 'step-tab active' : 'step-tab'}
+                type="button"
+                disabled={!isAvailable}
+                onClick={() => goToStep(step.id)}
+              >
+                <span>{index + 1}</span>
+                {step.label}
+              </button>
+            )
+          })}
+        </nav>
 
         <div className="status-strip" aria-live="polite">
           <span>{repeaters.length} repeaters loaded</span>
@@ -204,30 +306,85 @@ function App() {
           <span>{zones.length} zones</span>
         </div>
 
-        <ZoneBuilder
-          selectedCount={selectedRepeaters.length}
-          zones={zones}
-          zoneSummaries={zoneSummaries}
-          onAssignZone={assignSelectedToZone}
-          onAutoAssignZones={autoAssignSelectedZones}
-          onClearZones={clearSelectedZones}
-        />
+        {activeStep === 'import' ? (
+          <ImportPanel onFilesLoaded={handleFilesLoaded} message={message} />
+        ) : null}
 
-        <RepeaterTable
-          repeaters={repeaters}
-          onUpdateRepeater={updateRepeater}
-          onSelectAll={setAllSelected}
-        />
+        {activeStep === 'repeaters' ? (
+          <RepeaterTable
+            repeaters={repeaters}
+            onUpdateRepeater={updateRepeater}
+            onSelectAll={setAllSelected}
+          />
+        ) : null}
 
-        <ExportPanel
-          selectedCount={selectedRepeaters.length}
-          exportModule={exportModule}
-          onExportModuleChange={setExportModule}
-          apxOptions={apxOptions}
-          onApxOptionsChange={setApxOptions}
-          onExport={handleExport}
-        />
+        {activeStep === 'zones' ? (
+          <ZoneBuilder
+            selectedCount={selectedRepeaters.length}
+            zones={zones}
+            zoneSummaries={zoneSummaries}
+            repeaters={repeaters}
+            onAutoAssignZones={autoAssignSelectedZones}
+            onCreateZone={addCustomZone}
+            onMoveRepeaterToZone={moveRepeaterToZone}
+            onRenameZone={renameZone}
+            onDeleteZone={deleteZone}
+            onClearZones={clearSelectedZones}
+          />
+        ) : null}
+
+        {activeStep === 'export' ? (
+          <ExportPanel
+            selectedCount={selectedRepeaters.length}
+            exportModule={exportModule}
+            onExportModuleChange={setExportModule}
+            apxOptions={apxOptions}
+            onApxOptionsChange={setApxOptions}
+            onExport={handleExport}
+          />
+        ) : null}
+
+        <div className="step-actions">
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={!previousStep}
+            onClick={goToPreviousStep}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            disabled={!canMoveNext}
+            onClick={goToNextStep}
+          >
+            {nextStep ? `Next: ${nextStep.label}` : 'Workflow complete'}
+          </button>
+        </div>
       </section>
+
+      <footer className="app-footer">
+        <p>
+          RB2 is a browser-only amateur radio programming helper for user-reviewable import files; data can be exported from{' '}
+          <a
+            href="https://www.repeaterbook.com/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            RepeaterBook
+          </a>
+          ; RB2 does not create native Motorola codeplugs, connect to radios,
+          or bypass CPS; licensed under{' '}
+          <a
+            href="https://www.gnu.org/licenses/gpl-3.0.en.html"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GNU GPLv3
+          </a>
+          .
+        </p>
+      </footer>
     </main>
   )
 }
@@ -235,13 +392,28 @@ function App() {
 function buildZoneName(repeater, strategy) {
   const source = repeater.source || {}
   const zoneByStrategy = {
-    county: source.County || source.county || 'County',
-    state: source.State || source.state || 'State',
+    city: readSourceField(source, ['Nearest City', 'City', 'Location']) || 'City',
+    county: readSourceField(source, ['County']) || 'County',
+    state: readSourceField(source, ['State', 'Province']) || 'State',
     band: getBandZoneName(repeater.rxFrequency),
     mode: repeater.mode || 'Mode',
   }
 
   return truncateZoneName(zoneByStrategy[strategy] || DEFAULT_ZONE)
+}
+
+function readSourceField(source, aliases) {
+  const normalizedEntries = Object.entries(source).reduce((fields, [key, value]) => {
+    fields[normalizeSourceKey(key)] = value
+    return fields
+  }, {})
+
+  for (const alias of aliases) {
+    const value = normalizedEntries[normalizeSourceKey(alias)]
+    if (value) return String(value).trim()
+  }
+
+  return ''
 }
 
 function getBandZoneName(frequencyMhz) {
@@ -256,6 +428,10 @@ function getBandZoneName(frequencyMhz) {
 
 function truncateZoneName(value) {
   return String(value || DEFAULT_ZONE).trim().slice(0, ZONE_NAME_MAX_LENGTH) || DEFAULT_ZONE
+}
+
+function normalizeSourceKey(value) {
+  return String(value).toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
 export default App
