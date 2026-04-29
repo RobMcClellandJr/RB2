@@ -1,0 +1,10 @@
+Output Freq,Input Freq,Offset,Uplink Tone,Downlink Tone,Call,"Location",County,State,Modes,Digital Access
+444.925000,449.92500,+,,,KI4WZA,"Milton",Santa Rosa,Florida,DSTAR ,
+444.725000,449.72500,+,100.0,,KD4FZB,"Milton",Santa Rosa,Florida,FM ,
+444.400000,449.40000,+,100.0,,K4LWC,"Milton",Santa Rosa,Florida,DMR ,1
+444.200000,449.20000,+,100.0,100.0,KC4ERT,"Navarre",Santa Rosa,Florida,FM Fusion WIRES-X ,
+443.975000,448.97500,+,100.0,100.0,N3CMH,"Milton - NAS Whiting Field",Santa Rosa,Florida,FM EchoLink ,
+147.330000,147.93000,+,D023,D023,KO4SRC,"Munson - Hwy 4/ Munson Hwy",Santa Rosa,Florida,Fusion ,
+146.700000,146.10000,-,100.0,100.0,K4SRC,"Milton",Santa Rosa,Florida,FM EchoLink Fusion WIRES-X ,
+145.490000,144.89000,-,100.0,,W4VIY,"Milton",Santa Rosa,Florida,FM EchoLink Fusion ,
+145.250000,144.65000,-,100.0,,N3CMH,"Milton - NAS Whiting Field",Santa Rosa,Florida,FM ,
