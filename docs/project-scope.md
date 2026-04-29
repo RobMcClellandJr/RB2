@@ -1,9 +1,9 @@
 # RB2 Project Scope
 
 RB2 is an open-source amateur radio programming helper. The browser-only MVP
-imports RepeaterBook-style CSV files, lets the user review and organize
-conventional amateur repeater records, and exports user-reviewable CSV or XML
-files.
+imports one or more RepeaterBook-style CSV files, lets the user review and
+organize conventional amateur repeater records, and exports user-reviewable CSV
+or XML files.
 
 RB2 does not:
 

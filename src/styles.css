@@ -133,6 +133,13 @@ h3 {
   width: 100%;
 }
 
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .file-picker,
 button {
   min-height: 40px;
@@ -388,7 +395,7 @@ button:disabled {
 
 table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1360px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -427,7 +434,7 @@ tbody tr:hover {
 }
 
 .table-input.compact {
-  width: 150px;
+  width: 118px;
 }
 
 .empty-row {
@@ -484,6 +491,7 @@ input[type='checkbox'] {
   .zone-form input,
   .zone-form button,
   .zone-actions button,
+  .table-actions button,
   .field-control,
   .field-control input,
   .field-control select,

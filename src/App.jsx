@@ -28,7 +28,7 @@ function downloadCsv(filename, csvText) {
 
 function App() {
   const [repeaters, setRepeaters] = useState([])
-  const [fileName, setFileName] = useState('')
+  const [importName, setImportName] = useState('')
   const [message, setMessage] = useState('Import a RepeaterBook CSV to begin.')
   const [exportModule, setExportModule] = useState('apx')
   const [apxOptions, setApxOptions] = useState({
@@ -66,22 +66,36 @@ function App() {
     return [...summaries.values()].sort((a, b) => a.name.localeCompare(b.name))
   }, [repeaters])
 
-  function handleFileLoaded(text, incomingFileName) {
+  function handleFilesLoaded(files, readError) {
+    if (readError) {
+      setRepeaters([])
+      setImportName('')
+      setMessage(readError.message)
+      return
+    }
+
     try {
-      const rows = parseCsv(text)
-      const normalized = rows.map((row, index) =>
-        normalizeRepeater(row, {
-          fallbackId: `repeater-${index + 1}`,
-          defaultZone: DEFAULT_ZONE,
-        }),
-      )
+      const normalized = files.flatMap((file, fileIndex) => {
+        const rows = parseCsv(file.text)
+        return rows.map((row, rowIndex) =>
+          normalizeRepeater(row, {
+            fallbackId: `file-${fileIndex + 1}-repeater-${rowIndex + 1}`,
+            defaultZone: DEFAULT_ZONE,
+          }),
+        )
+      })
+      const fileCount = files.length
+      const importLabel =
+        fileCount === 1 ? files[0].name : `rb2-${fileCount}-csv-files`
 
       setRepeaters(normalized)
-      setFileName(incomingFileName)
-      setMessage(`Loaded ${normalized.length} repeater record${normalized.length === 1 ? '' : 's'}.`)
+      setImportName(importLabel)
+      setMessage(
+        `Loaded ${normalized.length} repeater record${normalized.length === 1 ? '' : 's'} from ${fileCount} CSV file${fileCount === 1 ? '' : 's'}.`,
+      )
     } catch (error) {
       setRepeaters([])
-      setFileName('')
+      setImportName('')
       setMessage(error.message)
     }
   }
@@ -135,7 +149,7 @@ function App() {
       return
     }
 
-    const baseName = fileName.replace(/\.[^.]+$/, '') || 'rb2-repeaters'
+    const baseName = importName.replace(/\.[^.]+$/, '') || 'rb2-repeaters'
     const timestamp = new Date().toISOString().slice(0, 10)
 
     if (type === 'apx') {
@@ -182,7 +196,7 @@ function App() {
       </header>
 
       <section className="workspace" aria-label="RB2 repeater workflow">
-        <ImportPanel onFileLoaded={handleFileLoaded} message={message} />
+        <ImportPanel onFilesLoaded={handleFilesLoaded} message={message} />
 
         <div className="status-strip" aria-live="polite">
           <span>{repeaters.length} repeaters loaded</span>

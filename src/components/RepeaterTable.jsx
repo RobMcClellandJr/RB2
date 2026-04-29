@@ -1,27 +1,66 @@
 import { APX_NAME_MAX_LENGTH } from '../modules/apx/apxConstraints'
+import { useState } from 'react'
 
 function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
+  const [editMode, setEditMode] = useState(false)
   const allSelected =
     repeaters.length > 0 && repeaters.every((repeater) => repeater.selected)
+
+  function updateMode(repeater, mode) {
+    onUpdateRepeater(repeater.id, {
+      mode,
+      source: {
+        ...repeater.source,
+        Modes: mode,
+      },
+    })
+  }
+
+  function renderCellInput(repeater, fieldName, options = {}) {
+    return editMode ? (
+      <input
+        className={options.compact ? 'table-input compact' : 'table-input'}
+        maxLength={options.maxLength}
+        value={repeater[fieldName] || ''}
+        onChange={(event) =>
+          onUpdateRepeater(repeater.id, {
+            [fieldName]: event.target.value,
+          })
+        }
+      />
+    ) : (
+      repeater[fieldName] || options.emptyText || ''
+    )
+  }
 
   return (
     <section className="panel table-panel" aria-labelledby="repeaters-title">
       <div className="panel-heading">
         <div>
           <h2 id="repeaters-title">Repeaters</h2>
-          <p>Edit channel names, choose what exports, and verify tones and modes.</p>
+          <p>Channel name and zone stay editable. Turn on edit mode to correct imported frequency, tone, mode, or NAC data.</p>
           <p className="constraint-note">
             APX display fields are limited to {APX_NAME_MAX_LENGTH} characters.
           </p>
         </div>
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={() => onSelectAll(!allSelected)}
-          disabled={repeaters.length === 0}
-        >
-          {allSelected ? 'Deselect all' : 'Select all'}
-        </button>
+        <div className="table-actions">
+          <button
+            className={editMode ? 'primary-button' : 'secondary-button'}
+            type="button"
+            onClick={() => setEditMode((current) => !current)}
+            disabled={repeaters.length === 0}
+          >
+            {editMode ? 'Editing on' : 'Edit imported data'}
+          </button>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => onSelectAll(!allSelected)}
+            disabled={repeaters.length === 0}
+          >
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </button>
+        </div>
       </div>
 
       <div className="table-wrap">
@@ -33,8 +72,10 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
               <th scope="col">Zone</th>
               <th scope="col">RX</th>
               <th scope="col">TX</th>
-              <th scope="col">Tone</th>
+              <th scope="col">TX Tone</th>
+              <th scope="col">RX Tone</th>
               <th scope="col">Mode</th>
+              <th scope="col">P25 NAC</th>
               <th scope="col">Callsign</th>
               <th scope="col">Location</th>
             </tr>
@@ -42,7 +83,7 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
           <tbody>
             {repeaters.length === 0 ? (
               <tr>
-                <td colSpan="9" className="empty-row">
+                <td colSpan="11" className="empty-row">
                   No CSV loaded yet.
                 </td>
               </tr>
@@ -85,12 +126,32 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
                       }
                     />
                   </td>
-                  <td>{repeater.rxFrequency}</td>
-                  <td>{repeater.txFrequency}</td>
-                  <td>{repeater.tone || 'None'}</td>
-                  <td>{repeater.mode}</td>
-                  <td>{repeater.callsign}</td>
-                  <td>{repeater.location}</td>
+                  <td>{renderCellInput(repeater, 'rxFrequency', { compact: true })}</td>
+                  <td>{renderCellInput(repeater, 'txFrequency', { compact: true })}</td>
+                  <td>{renderCellInput(repeater, 'tone', { compact: true, emptyText: 'None' })}</td>
+                  <td>{renderCellInput(repeater, 'rxTone', { compact: true, emptyText: repeater.tone || 'None' })}</td>
+                  <td>
+                    {editMode ? (
+                      <select
+                        className="table-input compact"
+                        value={repeater.mode}
+                        onChange={(event) => updateMode(repeater, event.target.value)}
+                      >
+                        <option value="FM">FM</option>
+                        <option value="P25">P25</option>
+                        <option value="FM P25">FM + P25</option>
+                        <option value="DMR">DMR</option>
+                        <option value="D-STAR">D-STAR</option>
+                        <option value="Fusion">Fusion</option>
+                        <option value="NXDN">NXDN</option>
+                      </select>
+                    ) : (
+                      repeater.mode
+                    )}
+                  </td>
+                  <td>{renderCellInput(repeater, 'digitalAccess', { compact: true, maxLength: 8, emptyText: '-' })}</td>
+                  <td>{renderCellInput(repeater, 'callsign', { compact: true })}</td>
+                  <td>{renderCellInput(repeater, 'location')}</td>
                 </tr>
               ))
             )}

@@ -59,8 +59,12 @@ APX CPS stores P25 NAC in the XML as `Tx Network ID`, `Rx / TA  Network ID`, and
 `Direct Network ID`. RB2 reads NAC from the RepeaterBook CSV `Digital Access`
 field first. It accepts NAC values in the familiar hexadecimal form such as
 `293` and writes the decimal value CPS expects, such as `659`. If a RepeaterBook
-P25 row has no valid `Digital Access` value, RB2 skips that P25 channel instead
-of generating a NAC value.
+P25 row has no valid `Digital Access` value, RB2 uses the APX default P25 NAC
+value.
+
+The repeater review table shows the imported P25 NAC value. Channel name and
+zone are editable by default. Use table edit mode only when imported data needs
+correction; edits to mode or NAC are used by the APX XML exporter.
 
 Select the APX target radio bands before exporting. No APX bands are selected
 by default. RB2 filters out channels whose RX or TX frequency is outside the

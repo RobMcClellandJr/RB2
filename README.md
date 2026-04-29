@@ -8,11 +8,13 @@ credentials.
 
 ## What RB2 Does
 
-- Upload a RepeaterBook-style CSV file.
+- Upload one or more RepeaterBook-style CSV files.
 - Parse conventional amateur repeater records.
 - Display repeaters in a review table.
 - Select or deselect repeaters.
-- Edit channel display names.
+- Edit channel display names and zones by default.
+- Enable edit mode to correct imported RX/TX frequency, tone, mode, callsign,
+  location, or P25 NAC data before export.
 - Assign selected repeaters to zones manually or organize them by county, band,
   or mode.
 - Export selected repeaters as Generic CSV.
@@ -25,8 +27,8 @@ frequency option, and zone/channel assignment records for selected FM repeaters
 only. The APX XML export lets you set the conventional system name and
 personality base name before downloading.
 For P25 conventional exports, RB2 maps RepeaterBook `Digital Access` NAC values
-from the CSV into APX Network ID fields. RB2 does not invent NAC values for P25
-channels; P25 rows without a CSV NAC are skipped from the APX XML export.
+from the CSV into APX Network ID fields. If a P25 row has no CSV NAC, RB2 uses
+the APX default P25 NAC value.
 RB2 automatically exports analog FM and P25 conventional APX channels based on
 RepeaterBook mode data. Rows that list both FM and P25 are exported as separate
 APX channels.
@@ -82,7 +84,8 @@ Open the local URL Vite prints in your terminal, usually:
 http://localhost:5173/
 ```
 
-Try the included sample file:
+Try the included sample file, or select multiple CSV files at once to combine
+them into one review table:
 
 ```text
 examples/sample-repeaterbook.csv

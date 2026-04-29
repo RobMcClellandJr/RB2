@@ -10,12 +10,14 @@ export function exportApxCpsXml(repeaters, options = {}) {
     options.portableModel === 'apx8000' ? 'apx8000' : 'srx2200'
   const portableTopChannelName =
     options.portableTopChannelName === 'rxFrequency' ? 'rxFrequency' : 'callsign'
-  const expandedChannels = expandApxChannels(repeaters)
+  const defaultNetworkId = getP25NetworkIdFromValue(options.defaultNac || '293')
+  const expandedChannels = expandApxChannels(repeaters, defaultNetworkId)
   const skippedModeCount = repeaters.length - expandedChannels.sourceCount
   const supportedChannels = expandedChannels.channels.filter((channel) =>
     repeaterMatchesApxBands(channel, enabledBands),
   )
   const skippedBandCount = expandedChannels.channels.length - supportedChannels.length
+  const defaultNacCount = supportedChannels.filter((channel) => channel.usedDefaultNac).length
   const personalityBaseName =
     sanitizeApxName(options.personalityName || 'RB2') || 'RB2'
   const systemName =
@@ -70,8 +72,8 @@ export function exportApxCpsXml(repeaters, options = {}) {
       ? ` Skipped ${skippedBandCount} APX channel${skippedBandCount === 1 ? '' : 's'} outside the selected APX bands.`
       : ''
   const nacText =
-    expandedChannels.skippedNacCount > 0
-      ? ` Skipped ${expandedChannels.skippedNacCount} P25 channel${expandedChannels.skippedNacCount === 1 ? '' : 's'} without a valid RepeaterBook NAC/Digital Access value.`
+    defaultNacCount > 0
+      ? ` Used default NAC for ${defaultNacCount} P25 channel${defaultNacCount === 1 ? '' : 's'} without a RepeaterBook NAC/Digital Access value.`
       : ''
 
   const noChannelsReason =
@@ -92,10 +94,11 @@ export function exportApxCpsXml(repeaters, options = {}) {
   }
 }
 
-function expandApxChannels(repeaters) {
+function expandApxChannels(repeaters, defaultNetworkId) {
   const channels = []
   let sourceCount = 0
   let skippedNacCount = 0
+  let defaultNacCount = 0
 
   repeaters.forEach((repeater, index) => {
     const sourceModes = getSourceModes(repeater)
@@ -106,15 +109,26 @@ function expandApxChannels(repeaters) {
     if (hasAnalog) channels.push(toApxChannel(repeater, index, 'analog', hasP25))
     if (hasP25) {
       const networkId = getP25NetworkId(repeater)
-      if (networkId) {
-        channels.push(toApxChannel(repeater, index, 'p25', hasAnalog, networkId))
+      const p25NetworkId = networkId || defaultNetworkId
+      if (p25NetworkId) {
+        if (!networkId) defaultNacCount += 1
+        channels.push(
+          toApxChannel(
+            repeater,
+            index,
+            'p25',
+            hasAnalog,
+            p25NetworkId,
+            !networkId,
+          ),
+        )
       } else {
         skippedNacCount += 1
       }
     }
   })
 
-  return { channels, sourceCount, skippedNacCount }
+  return { channels, sourceCount, skippedNacCount, defaultNacCount }
 }
 
 function getSourceModes(repeater) {
@@ -155,7 +169,14 @@ function hasP25Channels(channels) {
   return channels.some((channel) => channel.channelType === 'p25')
 }
 
-function toApxChannel(repeater, index, channelType, needsSuffix, networkId = '') {
+function toApxChannel(
+  repeater,
+  index,
+  channelType,
+  needsSuffix,
+  networkId = '',
+  usedDefaultNac = false,
+) {
   const rxDisplay = formatDisplayFrequency(repeater.rxFrequency)
   const callsign = sanitizeApxName(repeater.callsign || `CH${index + 1}`, 8)
   const frequencyName = sanitizeApxName(`${rxDisplay}-${callsign}`)
@@ -176,6 +197,7 @@ function toApxChannel(repeater, index, channelType, needsSuffix, networkId = '')
     txTone: repeater.tone,
     rxTone: repeater.rxTone || repeater.tone,
     networkId,
+    usedDefaultNac,
     channelType,
     spacing: repeater.bandwidth === 'Narrow' ? '2.5 kHz / 12.5 kHz' : '5 kHz / 25 kHz',
     talkaround: repeater.talkaround === 'Yes',
@@ -482,8 +504,8 @@ function renderConventionalPersonality(
     field('Scan Select', 'Non-XL & XL'),
     field('ASTRO OTAR Profile Index', '<Disabled>'),
     field('DES-XL Tx Default', 'False'),
-    field('Voice\\Key Select', '<None>'),
-    field('Packet Data\\Key Select', '<None>'),
+    field('Voice\\Key Select', 'Sec Key 1'),
+    field('Packet Data\\Key Select', 'Sec Key 1'),
     field('Echo Mute Time (ms)', '0'),
     field('Packet Data\\Ignore Rx Clear Packet Data', 'False'),
     field('XL Delay Following Key ID', '50'),
@@ -768,6 +790,12 @@ function getP25NetworkId(repeater) {
   )
     .trim()
     .toUpperCase()
+
+  return getP25NetworkIdFromValue(rawValue)
+}
+
+function getP25NetworkIdFromValue(value) {
+  const rawValue = String(value || '').trim().toUpperCase()
 
   if (!rawValue) return ''
 

@@ -1,12 +1,14 @@
-function ImportPanel({ onFileLoaded, message }) {
+function ImportPanel({ onFilesLoaded, message }) {
   function handleFileChange(event) {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const files = [...(event.target.files || [])]
+    if (!files.length) return
 
-    const reader = new FileReader()
-    reader.onload = () => onFileLoaded(String(reader.result || ''), file.name)
-    reader.onerror = () => onFileLoaded('', file.name)
-    reader.readAsText(file)
+    Promise.all(files.map(readTextFile))
+      .then((loadedFiles) => onFilesLoaded(loadedFiles))
+      .catch((error) => onFilesLoaded([], error))
+      .finally(() => {
+        event.target.value = ''
+      })
   }
 
   return (
@@ -16,11 +18,29 @@ function ImportPanel({ onFileLoaded, message }) {
         <p>{message}</p>
       </div>
       <label className="file-picker">
-        <span>Upload CSV</span>
-        <input accept=".csv,text/csv" type="file" onChange={handleFileChange} />
+        <span>Upload CSVs</span>
+        <input
+          accept=".csv,text/csv"
+          multiple
+          type="file"
+          onChange={handleFileChange}
+        />
       </label>
     </section>
   )
+}
+
+function readTextFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () =>
+      resolve({
+        name: file.name,
+        text: String(reader.result || ''),
+      })
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}.`))
+    reader.readAsText(file)
+  })
 }
 
 export default ImportPanel
