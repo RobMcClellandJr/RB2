@@ -38,12 +38,17 @@ structure. This is still a reviewable intermediate file, not a native codeplug.
 
 The XML export currently creates:
 
-- One conventional system named `RB2 Cnv Sys`.
-- One analog conventional personality named `RB2 Analog`.
+- One conventional system using the APX system name from the export panel.
+- Analog and P25 conventional personalities using the APX personality base from
+  the export panel.
 - Frequency options for selected FM repeaters.
 - Mobile zone channel assignments keep the selected RB2 zone together.
 - Portable zone channel assignments split into 16-channel chunks for the
   selector knob positions.
+
+The zone builder can assign selected channels to a typed zone name or organize
+selected channels automatically by county, amateur band, or mode before XML
+export.
 
 APX XML export infers analog FM and P25 conventional channels from RepeaterBook
 mode data. If a row lists both FM and P25, RB2 exports separate APX channels for

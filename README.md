@@ -13,7 +13,8 @@ credentials.
 - Display repeaters in a review table.
 - Select or deselect repeaters.
 - Edit channel display names.
-- Assign selected repeaters to zones.
+- Assign selected repeaters to zones manually or organize them by county, band,
+  or mode.
 - Export selected repeaters as Generic CSV.
 - Export selected FM repeaters as APX CPS-style XML for user review/import.
 - Export an APX review CSV for auditing, not for CPS import.
@@ -21,7 +22,8 @@ credentials.
 APX CPS imports and exports XML files, not CSV. RB2's APX CPS XML export is
 still not a codeplug. It creates reviewable conventional system, personality,
 frequency option, and zone/channel assignment records for selected FM repeaters
-only.
+only. The APX XML export lets you set the conventional system name and
+personality base name before downloading.
 For P25 conventional exports, RB2 maps RepeaterBook `Digital Access` NAC values
 from the CSV into APX Network ID fields. RB2 does not invent NAC values for P25
 channels; P25 rows without a CSV NAC are skipped from the APX XML export.

@@ -9,10 +9,9 @@ function RepeaterTable({ repeaters, onUpdateRepeater, onSelectAll }) {
       <div className="panel-heading">
         <div>
           <h2 id="repeaters-title">Repeaters</h2>
-          <p>Review selection, names, and zone assignment before exporting.</p>
+          <p>Edit channel names, choose what exports, and verify tones and modes.</p>
           <p className="constraint-note">
-            APX-friendly names are kept to {APX_NAME_MAX_LENGTH} display
-            characters.
+            APX display fields are limited to {APX_NAME_MAX_LENGTH} characters.
           </p>
         </div>
         <button

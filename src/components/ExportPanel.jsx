@@ -3,6 +3,8 @@ import { APX_BANDS } from '../modules/apx/apxBands'
 
 function ExportPanel({
   selectedCount,
+  exportModule,
+  onExportModuleChange,
   apxOptions,
   onApxOptionsChange,
   onExport,
@@ -33,101 +35,140 @@ function ExportPanel({
   return (
     <section className="panel export-panel" aria-labelledby="export-title">
       <div>
-        <h2 id="export-title">Export</h2>
+        <h2 id="export-title">Export Builder</h2>
         <p>
-          Generic CSV is for review and non-CPS workflows. APX CPS uses XML, and
-          RB2 does not generate native Motorola codeplug files.
-        </p>
-        <p className="constraint-note">
-          APX XML uses RB2's built-in conventional analog template.
+          Customize the APX XML or download review CSV files. CPS import still
+          happens in Motorola CPS.
         </p>
       </div>
       <div className="export-controls">
-        <label className="field-control">
-          <span>APX personality base</span>
-          <input
-            maxLength={APX_NAME_MAX_LENGTH}
-            value={apxOptions.personalityName}
-            onChange={(event) =>
-              updateApxOption('personalityName', event.target.value)
-            }
-          />
-        </label>
-        <label className="field-control">
-          <span>APX radio type</span>
-          <select
-            value={apxOptions.radioType}
-            onChange={(event) => updateApxOption('radioType', event.target.value)}
-          >
-            <option value="mobile">Mobile</option>
-            <option value="portable">Portable</option>
-          </select>
-        </label>
-        {apxOptions.radioType === 'portable' ? (
-          <>
-            <label className="field-control">
-              <span>Portable model</span>
-              <select
-                value={apxOptions.portableModel}
-                onChange={(event) =>
-                  updateApxOption('portableModel', event.target.value)
-                }
-              >
-                <option value="srx2200">SRX 2200</option>
-                <option value="apx8000">APX 8000</option>
-              </select>
-            </label>
-            <label className="field-control">
-              <span>Top channel name</span>
-              <select
-                value={apxOptions.portableTopChannelName}
-                onChange={(event) =>
-                  updateApxOption('portableTopChannelName', event.target.value)
-                }
-              >
-                <option value="callsign">Callsign</option>
-                <option value="rxFrequency">RX frequency</option>
-              </select>
-            </label>
-          </>
-        ) : null}
-        <fieldset className="band-control">
-          <legend>APX bands</legend>
-          <div>
-            {APX_BANDS.map((band) => (
-              <label key={band.id}>
-                <input
-                  checked={apxOptions.enabledBands.includes(band.id)}
-                  type="checkbox"
-                  onChange={() => toggleApxBand(band.id)}
-                />
-                <span>{band.label}</span>
-              </label>
-            ))}
+        <div className="control-group module-group">
+          <div className="control-group-heading">
+            <h3>Module</h3>
+            <p>Choose the radio family/export target.</p>
           </div>
-        </fieldset>
-        <div className="export-actions">
-        <button
-          type="button"
-          onClick={() => onExport('generic')}
-          disabled={selectedCount === 0}
-        >
-          Generic CSV
-        </button>
-        <button
-          type="button"
-          onClick={() => onExport('apxXml')}
-          disabled={selectedCount === 0}
-        >
-          APX CPS XML
-        </button>
-        <button
-          type="button"
-          onClick={() => onExport('apx')}
-          disabled={selectedCount === 0}
-        >
-          APX review CSV
-        </button>
+          <label className="field-control">
+            <span>Export module</span>
+            <select
+              value={exportModule}
+              onChange={(event) => onExportModuleChange(event.target.value)}
+            >
+              <option value="apx">Motorola APX</option>
+            </select>
+          </label>
+        </div>
+        <div className="control-group xml-settings">
+          <div className="control-group-heading">
+            <h3>APX XML</h3>
+            <p>Names and radio options used in the CPS import XML.</p>
+          </div>
+          <div className="control-grid">
+            <label className="field-control">
+              <span>Personality base</span>
+              <input
+                maxLength={APX_NAME_MAX_LENGTH}
+                value={apxOptions.personalityName}
+                onChange={(event) =>
+                  updateApxOption('personalityName', event.target.value)
+                }
+              />
+            </label>
+            <label className="field-control">
+              <span>System name</span>
+              <input
+                maxLength={APX_NAME_MAX_LENGTH}
+                value={apxOptions.systemName}
+                onChange={(event) =>
+                  updateApxOption('systemName', event.target.value)
+                }
+              />
+            </label>
+            <label className="field-control">
+              <span>Radio type</span>
+              <select
+                value={apxOptions.radioType}
+                onChange={(event) => updateApxOption('radioType', event.target.value)}
+              >
+                <option value="mobile">Mobile</option>
+                <option value="portable">Portable</option>
+              </select>
+            </label>
+            {apxOptions.radioType === 'portable' ? (
+              <>
+                <label className="field-control">
+                  <span>Portable model</span>
+                  <select
+                    value={apxOptions.portableModel}
+                    onChange={(event) =>
+                      updateApxOption('portableModel', event.target.value)
+                    }
+                  >
+                    <option value="srx2200">SRX 2200</option>
+                    <option value="apx8000">APX 8000</option>
+                  </select>
+                </label>
+                <label className="field-control">
+                  <span>Top channel name</span>
+                  <select
+                    value={apxOptions.portableTopChannelName}
+                    onChange={(event) =>
+                      updateApxOption('portableTopChannelName', event.target.value)
+                    }
+                  >
+                    <option value="callsign">Callsign</option>
+                    <option value="rxFrequency">RX frequency</option>
+                  </select>
+                </label>
+              </>
+            ) : null}
+          </div>
+        </div>
+        <div className="control-group band-group">
+          <fieldset className="band-control">
+            <legend>Target APX Bands</legend>
+            <div>
+              {APX_BANDS.map((band) => (
+                <label key={band.id}>
+                  <input
+                    checked={apxOptions.enabledBands.includes(band.id)}
+                    type="checkbox"
+                    onChange={() => toggleApxBand(band.id)}
+                  />
+                  <span>{band.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+        <div className="control-group download-group">
+          <div className="control-group-heading">
+            <h3>Download</h3>
+            <p>{selectedCount} selected channel{selectedCount === 1 ? '' : 's'}</p>
+          </div>
+          <div className="export-actions">
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => onExport('apxXml')}
+              disabled={selectedCount === 0}
+            >
+              APX CPS XML
+            </button>
+            <button
+              type="button"
+              onClick={() => onExport('generic')}
+              disabled={selectedCount === 0}
+            >
+              Generic CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => onExport('apx')}
+              disabled={selectedCount === 0}
+            >
+              APX review CSV
+            </button>
+          </div>
         </div>
       </div>
     </section>

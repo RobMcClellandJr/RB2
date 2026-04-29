@@ -16,7 +16,7 @@ function ImportPanel({ onFileLoaded, message }) {
         <p>{message}</p>
       </div>
       <label className="file-picker">
-        <span>Choose CSV</span>
+        <span>Upload CSV</span>
         <input accept=".csv,text/csv" type="file" onChange={handleFileChange} />
       </label>
     </section>

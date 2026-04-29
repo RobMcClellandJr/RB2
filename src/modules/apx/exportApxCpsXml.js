@@ -18,6 +18,8 @@ export function exportApxCpsXml(repeaters, options = {}) {
   const skippedBandCount = expandedChannels.channels.length - supportedChannels.length
   const personalityBaseName =
     sanitizeApxName(options.personalityName || 'RB2') || 'RB2'
+  const systemName =
+    sanitizeApxName(options.systemName || 'RB2 Cnv Sys') || 'RB2 Cnv Sys'
   const personalityNames = buildPersonalityNames(
     supportedChannels,
     personalityBaseName,
@@ -40,8 +42,14 @@ export function exportApxCpsXml(repeaters, options = {}) {
       personalityNames,
       radioType,
       portableModel,
+      systemName,
     ),
-    renderConventionalSystem(radioType, portableModel, hasP25Channels(channels)),
+    renderConventionalSystem(
+      radioType,
+      portableModel,
+      hasP25Channels(channels),
+      systemName,
+    ),
     renderZoneChannelAssignments(
       zones,
       radioType,
@@ -205,14 +213,19 @@ function buildZones(channels, radioType) {
   return zones
 }
 
-function renderConventionalSystem(radioType, portableModel, hasP25Channel) {
+function renderConventionalSystem(
+  radioType,
+  portableModel,
+  hasP25Channel,
+  systemName,
+) {
   const portable = radioType === 'portable'
   const apx8000 = portable && portableModel === 'apx8000'
   const p25 = hasP25Channel
 
   return [
     '    <Recset Name="Conventional System" Id="2053">',
-    '      <Node Name="Conventional System" ReferenceKey="RB2 Cnv Sys">',
+    `      <Node Name="Conventional System" ReferenceKey="${xml(systemName)}">`,
     '        <Section Name="General" id="10118">',
     field('System Type', p25 ? 'ASTRO' : portable ? 'MDC' : 'ASTRO'),
     field('Data Profile Selection', '<Data Disabled>'),
@@ -220,7 +233,7 @@ function renderConventionalSystem(radioType, portableModel, hasP25Channel) {
     field('PTT-ID', 'None'),
     field('Emergency Profile Selection', '<Emergency TX Disabled>'),
     field('Preamble Enable', 'False'),
-    field('Conventional System Name', 'RB2 Cnv Sys'),
+    field('Conventional System Name', systemName),
     field('System Group Number', '1'),
     field('Individual ID', '1'),
     field('Preamble Length', '80'),
@@ -286,6 +299,7 @@ function renderConventionalPersonalities(
   personalityNames,
   radioType,
   portableModel,
+  systemName,
 ) {
   const personalityTypes = ['analog', 'p25'].filter((channelType) =>
     channels.some((channel) => channel.channelType === channelType),
@@ -300,6 +314,7 @@ function renderConventionalPersonalities(
         radioType,
         portableModel,
         channelType,
+        systemName,
       ),
     ),
     '    </Recset>',
@@ -312,6 +327,7 @@ function renderConventionalPersonality(
   radioType,
   portableModel,
   channelType,
+  systemName,
 ) {
   const portable = radioType === 'portable'
   const apx8000 = portable && portableModel === 'apx8000'
@@ -349,10 +365,10 @@ function renderConventionalPersonality(
     '        </Section>',
     '        <Section Name="Signaling" id="10144">',
     field('Non-ASTRO\\Signaling Type', 'None'),
-    field('Non-ASTRO\\System Number', 'RB2 Cnv Sys'),
+    field('Non-ASTRO\\System Number', systemName),
     field('ASTRO\\Digital Modulator Type', 'C4FM'),
     field('Emergency Revert\\Revert Type', 'Selected Channel'),
-    field('ASTRO\\ASTRO System', p25 ? 'RB2 Cnv Sys' : '<None>'),
+    field('ASTRO\\ASTRO System', p25 ? systemName : '<None>'),
     field('ASTRO\\Late Entry Fast Unmute', 'False'),
     field('Tone Signaling List', '<Tone Signaling Disabled>'),
     field('Non-ASTRO\\PTT ID', 'False'),
